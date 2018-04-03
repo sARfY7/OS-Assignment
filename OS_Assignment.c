@@ -5,7 +5,7 @@
 
 char Game[] = "Playing Game";
 
-sem_t stud, tech, staff, game;
+sem_t stud, tech, staff, game,tgame,stgame,stud_lock,tech_lock,staff_lock;
 
 int timeStart = 6, timeEnd = 7;
 
@@ -13,8 +13,9 @@ int studentCount = 0;
 void *student(void *n)
 {
     int studentN = (int) n;
-    sem_wait(&stud);
+
     sem_wait(&game);
+    sem_wait(&stud);
     int flag = 0;
     if ((timeStart >= 6) && (timeEnd <= 22))
     {
@@ -27,30 +28,27 @@ void *student(void *n)
         }
         else
         {
-            printf("Student %d Need one more player\n", studentN);
-            flag = 0;
+            flag=1;
         }
     }
-    sem_post(&game);
-    sem_post(&stud);
     printf("Student %d Process Started\n", studentN);
     if (flag == 1)
     {
         //critical section add game
         printf("Student %d %s\n", studentN, Game);
         sleep(2);
+        printf("Student %d Game Ended\n", studentN);
     }
 
-    sem_wait(&game);
-    if (studentCount == 1)
+    studentCount--;
+    if (studentCount == 0)
     {
         sem_post(&tech);
         sem_post(&staff);
-        studentCount = 0;
     }
-    sem_post(&game);
     sem_post(&stud);
-
+    sem_post(&game);
+   
     pthread_exit(NULL);
 }
 
@@ -58,14 +56,16 @@ int teacherCount = 0;
 void *teacher(void *n)
 {
     int teacherN = (int) n;
-    sem_wait(&tech);
+
     sem_wait(&game);
+    
+    sem_wait(&tech);
     int flag = 0;
     if ((timeStart >= 8) && (timeEnd <= 17))
     {
-        //printf("hello");
+        printf("hello\n");
         teacherCount++;
-        if (teacherCount == 2)
+        if (teacherCount == 1)
         {
             sem_wait(&stud);
             sem_wait(&staff);
@@ -73,30 +73,26 @@ void *teacher(void *n)
         }
         else
         {
-            printf("techer Need 1 more player\n");
-            flag = 0;
+            flag = 1;
         }
     }
-    sem_post(&game);
-    sem_post(&tech);
     printf("Teacher %d Process Started\n", teacherN);
     if (flag == 1)
-    {
+        {
         //critical section add game
         printf("Teacher %d %s\n", teacherN, Game);
         sleep(2);
+        printf("Teacher %d Game Ended\n", teacherN);
     }
-
-    sem_wait(&game);
-    if (teacherCount == 2)
+    teacherCount--;
+    if (teacherCount == 0)
     {
         sem_post(&stud);
         sem_post(&staff);
-        studentCount = 0;
     }
-    sem_post(&game);
     sem_post(&tech);
-
+   
+    sem_post(&game);
     pthread_exit(NULL);
 }
 
@@ -104,12 +100,13 @@ int techStaffCount = 0;
 void *tech_staff(void *n)
 {
     int techStaffN = (int) n;
-    sem_wait(&staff);
     sem_wait(&game);
+    
+    sem_wait(&staff);
     int flag = 0;
     techStaffCount++;
     //printf("hello");
-    if (techStaffCount == 2)
+    if (techStaffCount == 1)
     {
         sem_wait(&stud);
         sem_wait(&tech);
@@ -117,50 +114,53 @@ void *tech_staff(void *n)
     }
     else
     {
-        printf("staff Need 1 more player\n");
-        flag = 0;
+       
+        flag = 1;
     }
 
-    sem_post(&game);
-
+    
     printf("TechStaff %d Process Started\n", techStaffN);
     if (flag == 1)
     {
         //critical section add game
         printf("TechStaff %d %s\n", techStaffN, Game);
         sleep(2);
+        printf("TechStaff %d Game Ended\n", techStaffN);
     }
 
-    sem_wait(&game);
-    if (teacherCount == 2)
+    techStaffCount--;
+    if (techStaffCount == 0)
     {
         sem_post(&stud);
         sem_post(&tech);
-        studentCount = 0;
     }
-    sem_post(&game);
     sem_post(&staff);
-
+   sem_post(&game);
+    
     pthread_exit(NULL);
 }
 
 int main()
 {
     pthread_t st, st1, th, th1, sf, sf1;
-    sem_init(&stud, 0, 2);
-    sem_init(&tech, 0, 2);
-    sem_init(&staff, 0, 2);
+    sem_init(&stud, 0, 1);
+    sem_init(&tech, 0, 1);
+    sem_init(&staff, 0, 1);
     sem_init(&game, 0, 1);
-    pthread_create(&st, NULL, student, (void *) 1);
-    pthread_create(&th, NULL, teacher, (void *) 1);
-    // pthread_create(&sf, NULL, tech_staff, (void *) 1);
-    pthread_create(&st1, NULL, student, (void *) 2);
-    pthread_create(&th1, NULL, teacher, (void *) 2);
-    // pthread_create(&sf1, NULL, tech_staff, (void *) 2);
+    sem_init(&tgame, 0, 1);
+    sem_init(&stgame, 0, 1);
+    int a=1;
+    pthread_create(&st, NULL, student, (void *) a);
+    pthread_create(&th, NULL, teacher, (void *) a);
+    a++;
+     pthread_create(&sf, NULL, tech_staff, (void *) 1);
+    pthread_create(&st1, NULL, student, (void *) a);
+    pthread_create(&th1, NULL, teacher, (void *)a);
+     pthread_create(&sf1, NULL, tech_staff, (void *) 2);
     pthread_join(st, NULL);
     pthread_join(th, NULL);
-    // pthread_join(sf, NULL);
+     pthread_join(sf, NULL);
     pthread_join(st1, NULL);
     pthread_join(th1, NULL);
-    // pthread_join(sf1, NULL);
+     pthread_join(sf1, NULL);
 }
