@@ -74,7 +74,7 @@ void *teacher()
     int flag=0;
     if((timeinfo->tm_hour>=17)||(timeinfo->tm_hour<8))
     {
-        printf("hello");
+        //printf("hello");
         tcount++;
         if(tcount==2)
         {
