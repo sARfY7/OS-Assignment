@@ -1,3 +1,8 @@
+/*Consider a computer system in which computer games can be played
+by students only between 10 P.M. and 6 A.M. , by faculty members
+between 5 P.M. and 8 A.M. , and by the computer center staff at all
+times. Suggest a scheme for implementing this policy efficiently.*/
+
 #include <stdio.h>
 #include <semaphore.h>
 #include <pthread.h>
@@ -104,7 +109,6 @@ void *tech_staff(void *n)
     sem_wait(&staff);
     int flag = 0;
     techStaffCount++;
-    //printf("hello");
     if (techStaffCount == 1)
     {
         sem_wait(&stud);
@@ -140,23 +144,49 @@ void *tech_staff(void *n)
 
 int main()
 {
-    pthread_t st, st1, th, th1, sf, sf1;
+    pthread_t st[100], th[100], sf[100];
+    int no_of_students, no_of_teachers, no_of_techStaff, i;
     sem_init(&stud, 0, 1);
     sem_init(&tech, 0, 1);
     sem_init(&staff, 0, 1);
     sem_init(&game, 0, 1);
-    int a = 1;
-    pthread_create(&st, NULL, student, (void *)a);
-    pthread_create(&th, NULL, teacher, (void *)a);
-    a++;
-    pthread_create(&sf, NULL, tech_staff, (void *)1);
-    pthread_create(&st1, NULL, student, (void *)a);
-    pthread_create(&th1, NULL, teacher, (void *)a);
-    pthread_create(&sf1, NULL, tech_staff, (void *)2);
-    pthread_join(st, NULL);
-    pthread_join(th, NULL);
-    pthread_join(sf, NULL);
-    pthread_join(st1, NULL);
-    pthread_join(th1, NULL);
-    pthread_join(sf1, NULL);
+    printf("Enter No. of Students: ");
+    scanf("%d", &no_of_students);
+    printf("Enter No. of Teachers: ");
+    scanf("%d", &no_of_teachers);
+    printf("Enter No. of TechStaff: ");
+    scanf("%d", &no_of_techStaff);
+
+    // Threads Creation
+    for (i = 0; i < no_of_students; i++)
+    {
+        pthread_create(&st[i], NULL, student, (void *)i + 1);
+    }
+
+    for (i = 0; i < no_of_teachers; i++)
+    {
+        pthread_create(&th[i], NULL, teacher, (void *)i + 1);
+    }
+
+    for (i = 0; i < no_of_techStaff; i++)
+    {
+        pthread_create(&sf[i], NULL, tech_staff, (void *)i + 1);
+    }
+
+    // Threads Joining
+    
+    for (i = 0; i < no_of_students; i++)
+    {
+        pthread_join(st[i], NULL);
+    }
+
+    for (i = 0; i < no_of_teachers; i++)
+    {
+        pthread_join(th[i], NULL);
+    }
+
+    for (i = 0; i < no_of_techStaff; i++)
+    {
+        pthread_join(sf[i], NULL);
+    }
 }
